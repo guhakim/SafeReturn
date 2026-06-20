@@ -2,7 +2,8 @@
 
 > QR 코드와 익명 채팅 기술을 결합하여 분실물의 주인과 습득자를 안전하게 연결하는 **생활안전 분실물 반환 플랫폼**
 
-🌐 **라이브 데모**: [https://safereturn-qr.vercel.app](https://safereturn-qr.vercel.app)
+🌐 **라이브 데모**: [https://safereturn-qr.vercel.app](https://safereturn-qr.vercel.app)  
+📄 **발표자료**: [docs/발표자료.html](docs/발표자료.html)
 
 ---
 

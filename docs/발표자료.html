@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SafeReturn — 안심 QR 분실물 찾기</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background: #f8fafc;
+      color: #1e293b;
+    }
+
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 0 auto 20px;
+      background: white;
+      padding: 20mm 18mm;
+      page-break-after: always;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ── 표지 ── */
+    .cover {
+      background: linear-gradient(135deg, #1e40af 0%, #0f172a 100%);
+      color: white;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      gap: 20px;
+      padding: 40mm 18mm;
+    }
+    .cover .badge {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 99px;
+      padding: 6px 18px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .cover h1 {
+      font-size: 48px;
+      font-weight: 900;
+      line-height: 1.1;
+    }
+    .cover h1 span { color: #60a5fa; }
+    .cover .subtitle {
+      font-size: 18px;
+      color: rgba(255,255,255,0.75);
+      font-weight: 400;
+      line-height: 1.6;
+    }
+    .cover .tag-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 10px;
+    }
+    .cover .tag {
+      background: rgba(96,165,250,0.25);
+      border: 1px solid rgba(96,165,250,0.5);
+      color: #bfdbfe;
+      border-radius: 8px;
+      padding: 5px 14px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .cover .date {
+      position: absolute;
+      bottom: 20mm;
+      font-size: 11px;
+      color: rgba(255,255,255,0.4);
+    }
+
+    /* ── 일반 슬라이드 ── */
+    .slide-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 28px;
+      padding-bottom: 16px;
+      border-bottom: 3px solid #2563eb;
+    }
+    .slide-num {
+      width: 36px;
+      height: 36px;
+      background: #2563eb;
+      color: white;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 900;
+      flex-shrink: 0;
+    }
+    .slide-header h2 {
+      font-size: 22px;
+      font-weight: 900;
+      color: #0f172a;
+    }
+
+    /* ── 카드 그리드 ── */
+    .card-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+    .card {
+      background: #f1f5f9;
+      border-radius: 14px;
+      padding: 18px;
+      border-left: 4px solid #2563eb;
+    }
+    .card.green { border-left-color: #10b981; }
+    .card.purple { border-left-color: #8b5cf6; }
+    .card.orange { border-left-color: #f59e0b; }
+    .card h3 {
+      font-size: 13px;
+      font-weight: 900;
+      color: #1e293b;
+      margin-bottom: 8px;
+    }
+    .card p, .card li {
+      font-size: 12px;
+      color: #475569;
+      line-height: 1.7;
+    }
+    .card ul { padding-left: 16px; }
+
+    /* ── 표 ── */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      margin-bottom: 16px;
+    }
+    th {
+      background: #1e40af;
+      color: white;
+      padding: 10px 14px;
+      text-align: left;
+      font-weight: 700;
+    }
+    td {
+      padding: 10px 14px;
+      border-bottom: 1px solid #e2e8f0;
+      color: #374151;
+      vertical-align: top;
+    }
+    tr:nth-child(even) td { background: #f8fafc; }
+
+    /* ── 흐름도 ── */
+    .flow {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .flow-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .flow-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .flow-arrow {
+      width: 32px;
+      text-align: center;
+      color: #94a3b8;
+      font-size: 18px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .flow-content h4 { font-size: 13px; font-weight: 700; color: #1e293b; }
+    .flow-content p  { font-size: 11px; color: #64748b; margin-top: 2px; }
+
+    /* ── 코드 블록 ── */
+    .code-block {
+      background: #0f172a;
+      color: #7dd3fc;
+      border-radius: 12px;
+      padding: 16px;
+      font-size: 11px;
+      font-family: 'Courier New', monospace;
+      line-height: 1.8;
+      white-space: pre;
+      margin-bottom: 14px;
+      overflow: hidden;
+    }
+    .code-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+
+    /* ── 하이라이트 박스 ── */
+    .highlight-box {
+      background: linear-gradient(135deg, #eff6ff, #dbeafe);
+      border: 1px solid #bfdbfe;
+      border-radius: 14px;
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+    .highlight-box h3 { font-size: 14px; font-weight: 900; color: #1e40af; margin-bottom: 8px; }
+    .highlight-box p  { font-size: 12px; color: #1e3a8a; line-height: 1.7; }
+
+    /* ── DB 다이어그램 ── */
+    .db-diagram {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+    .db-table {
+      background: #f8fafc;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .db-table-header {
+      background: #1e40af;
+      color: white;
+      padding: 8px 14px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .db-table-body {
+      padding: 10px 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .db-col {
+      font-size: 11px;
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 3px 10px;
+      color: #374151;
+    }
+    .db-col.pk { border-color: #f59e0b; color: #92400e; background: #fffbeb; }
+    .db-col.fk { border-color: #8b5cf6; color: #5b21b6; background: #f5f3ff; }
+    .db-arrow {
+      text-align: center;
+      color: #94a3b8;
+      font-size: 18px;
+    }
+
+    /* ── 푸터 ── */
+    .page-footer {
+      position: absolute;
+      bottom: 12mm;
+      left: 18mm;
+      right: 18mm;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 10px;
+      color: #94a3b8;
+      border-top: 1px solid #f1f5f9;
+      padding-top: 8px;
+    }
+
+    /* ── 인쇄 설정 ── */
+    @media print {
+      body { background: white; }
+      .page { margin: 0; box-shadow: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ① 표지 -->
+<div class="page cover">
+  <div class="badge">🔒 프로젝트 발표</div>
+  <h1>Safe<span>Return</span></h1>
+  <p class="subtitle">
+    QR 코드 하나로 연결되는<br/>
+    <strong style="color:white">안심 분실물 익명 채팅 매칭 시스템</strong>
+  </p>
+  <div class="tag-row">
+    <span class="tag">회원가입 불필요</span>
+    <span class="tag">개인정보 보호</span>
+    <span class="tag">실시간 1:N 채팅</span>
+    <span class="tag">QR 스캔 즉시 연결</span>
+  </div>
+  <div class="date">2026 · SafeReturn Demo v1.0</div>
+</div>
+
+<!-- ② 문제 정의 -->
+<div class="page">
+  <div class="slide-header">
+    <div class="slide-num">01</div>
+    <h2>우리가 해결하려는 문제</h2>
+  </div>
+
+  <div class="highlight-box">
+    <h3>😰 지금까지의 분실물 찾기 과정</h3>
+    <p>물건을 잃어버리면 → 경찰 분실 신고 → 유실물 센터 방문 → 기다림 → 못 찾는 경우가 대부분</p>
+  </div>
+
+  <div class="card-grid">
+    <div class="card">
+      <h3>📵 연락처 노출 문제</h3>
+      <ul>
+        <li>전화번호를 물건에 직접 써두면<br/>개인정보 노출 위험</li>
+        <li>모르는 사람에게 연락처 공개 부담</li>
+      </ul>
+    </div>
+    <div class="card green">
+      <h3>⏰ 시간 지연 문제</h3>
+      <ul>
+        <li>습득자가 연락 방법을 몰라 그냥 지나침</li>
+        <li>공공기관 통한 연결은 수일 소요</li>
+      </ul>
+    </div>
+    <div class="card purple">
+      <h3>😨 대면 부담 문제</h3>
+      <ul>
+        <li>모르는 사람과 직접 만남에 대한 불안</li>
+        <li>장소 조율의 어려움</li>
+      </ul>
+    </div>
+    <div class="card orange">
+      <h3>📦 반환 방법 부재</h3>
+      <ul>
+        <li>편의점 택배함, 지하철 보관함 등<br/>비대면 반환 수단이 있지만 활용 안 됨</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span>SafeReturn — 안심 QR 분실물 찾기</span>
+    <span>2 / 7</span>
+  </div>
+</div>
+
+<!-- ③ 솔루션 -->
+<div class="page">
+  <div class="slide-header">
+    <div class="slide-num">02</div>
+    <h2>SafeReturn 솔루션</h2>
+  </div>
+
+  <div class="highlight-box">
+    <h3>💡 핵심 아이디어</h3>
+    <p>물건에 QR 스티커를 미리 붙여두면, 습득자가 스캔했을 때 <strong>개인정보 노출 없이</strong> 주인과 즉시 익명 채팅으로 연결됩니다.</p>
+  </div>
+
+  <div class="flow">
+    <div class="flow-step">
+      <div class="flow-icon" style="background:#dbeafe">👤</div>
+      <div class="flow-content">
+        <h4>1단계 — 스티커 발급 (물건 주인)</h4>
+        <p>물건 이름 + 연락처 + 비밀번호 입력 → 고유 QR 코드 생성 → 인쇄 후 물건에 부착</p>
+      </div>
+    </div>
+    <div class="flow-step"><div class="flow-arrow">↓</div></div>
+
+    <div class="flow-step">
+      <div class="flow-icon" style="background:#dcfce7">📦</div>
+      <div class="flow-content">
+        <h4>2단계 — 분실 발생</h4>
+        <p>며칠 뒤 물건 분실 → QR 스티커가 붙어 있는 물건을 누군가 발견</p>
+      </div>
+    </div>
+    <div class="flow-step"><div class="flow-arrow">↓</div></div>
+
+    <div class="flow-step">
+      <div class="flow-icon" style="background:#fef9c3">📱</div>
+      <div class="flow-content">
+        <h4>3단계 — QR 스캔 (습득자)</h4>
+        <p>핸드폰 카메라로 QR 스캔 → 안심 접수 페이지 자동 열림 (앱 설치 불필요)</p>
+      </div>
+    </div>
+    <div class="flow-step"><div class="flow-arrow">↓</div></div>
+
+    <div class="flow-step">
+      <div class="flow-icon" style="background:#ede9fe">💬</div>
+      <div class="flow-content">
+        <h4>4단계 — 익명 채팅 연결</h4>
+        <p>"주인과 채팅하기" 클릭 → 채팅방 자동 생성 → 주인 대시보드에 실시간 알림</p>
+      </div>
+    </div>
+    <div class="flow-step"><div class="flow-arrow">↓</div></div>
+
+    <div class="flow-step">
+      <div class="flow-icon" style="background:#fce7f3">🎉</div>
+      <div class="flow-content">
+        <h4>5단계 — 물건 반환</h4>
+        <p>채팅으로 장소 조율 → 편의점 택배함 / 지하철 보관함 등 비대면 반환 가능</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span>SafeReturn — 안심 QR 분실물 찾기</span>
+    <span>3 / 7</span>
+  </div>
+</div>
+
+<!-- ④ 주요 기능 -->
+<div class="page">
+  <div class="slide-header">
+    <div class="slide-num">03</div>
+    <h2>구현된 주요 기능</h2>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width:22%">기능</th>
+        <th>내용</th>
+        <th style="width:28%">특징</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>🔖 스티커 발급</strong></td>
+        <td>물건 이름 + 연락처 + 비밀번호 입력</td>
+        <td>고유 ID(SR-XXXXXX) 자동 생성</td>
+      </tr>
+      <tr>
+        <td><strong>📷 QR 코드 생성</strong></td>
+        <td>실제 접속 가능한 URL이 담긴 QR 코드 즉시 생성</td>
+        <td>인쇄 기능 내장</td>
+      </tr>
+      <tr>
+        <td><strong>📱 습득자 페이지</strong></td>
+        <td>QR 스캔 → 해당 물건 안심 접수 페이지 자동 열림</td>
+        <td>앱 설치 불필요 (웹 기반)</td>
+      </tr>
+      <tr>
+        <td><strong>💬 익명 채팅</strong></td>
+        <td>주인·습득자 실시간 1:N 채팅방 자동 생성</td>
+        <td>한 물건에 여러 습득자 동시 연결</td>
+      </tr>
+      <tr>
+        <td><strong>🔔 실시간 알림</strong></td>
+        <td>습득자가 채팅 시작 시 주인 대시보드에 즉시 알림</td>
+        <td>WebSocket 기반 실시간 연동</td>
+      </tr>
+      <tr>
+        <td><strong>🗑 스티커 삭제</strong></td>
+        <td>대화 종료 후 스티커 및 채팅방 일괄 삭제</td>
+        <td>확인 팝업으로 실수 방지</td>
+      </tr>
+      <tr>
+        <td><strong>📲 모바일 최적화</strong></td>
+        <td>핸드폰에서 QR 스캔 후 바로 사용 가능한 반응형 UI</td>
+        <td>탭 전환으로 주인/습득자 화면 분리</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="page-footer">
+    <span>SafeReturn — 안심 QR 분실물 찾기</span>
+    <span>4 / 7</span>
+  </div>
+</div>
+
+<!-- ⑤ 기술 스택 -->
+<div class="page">
+  <div class="slide-header">
+    <div class="slide-num">04</div>
+    <h2>기술 스택 및 아키텍처</h2>
+  </div>
+
+  <div class="card-grid" style="margin-bottom:20px">
+    <div class="card">
+      <h3>⚛️ 프론트엔드</h3>
+      <ul>
+        <li>React 19 + TypeScript</li>
+        <li>Tailwind CSS v4</li>
+        <li>Framer Motion (애니메이션)</li>
+        <li>Lucide React (아이콘)</li>
+      </ul>
+    </div>
+    <div class="card green">
+      <h3>⚡ 빌드 / 라우팅</h3>
+      <ul>
+        <li>Vite 6 (빌드 도구)</li>
+        <li>Hash 기반 라우팅 (#/find/:id)</li>
+        <li>별도 라우터 라이브러리 없음</li>
+      </ul>
+    </div>
+    <div class="card purple">
+      <h3>🗄 백엔드 설계</h3>
+      <ul>
+        <li>Supabase (PostgreSQL)</li>
+        <li>Realtime WebSocket 구독</li>
+        <li>Row Level Security (RLS)</li>
+      </ul>
+    </div>
+    <div class="card orange">
+      <h3>🔧 기타</h3>
+      <ul>
+        <li>QR 생성: api.qrserver.com</li>
+        <li>현재: React State로 시뮬레이션</li>
+        <li>배포: Google AI Studio</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="code-label">Hash 기반 라우팅 — QR 스캔 시 습득자 페이지 자동 진입</div>
+  <div class="code-block">// QR 코드 URL 예시
+http://192.168.36.194:3000/#/find/SR-721842
+
+// 앱 로드 시 해시 파싱
+const hash = window.location.hash;  // "#/find/SR-721842"
+const itemId = hash.match(/^#\/find\/(.+)$/)?.[1];  // "SR-721842"
+
+// itemId가 있으면 → 습득자 전용 페이지 표시
+// itemId가 없으면 → 주인 대시보드 표시</div>
+
+  <div class="page-footer">
+    <span>SafeReturn — 안심 QR 분실물 찾기</span>
+    <span>5 / 7</span>
+  </div>
+</div>
+
+<!-- ⑥ DB 설계 -->
+<div class="page">
+  <div class="slide-header">
+    <div class="slide-num">05</div>
+    <h2>데이터베이스 설계 (1:N 관계)</h2>
+  </div>
+
+  <div class="highlight-box" style="margin-bottom:20px">
+    <h3>📐 핵심 설계 원칙</h3>
+    <p>물건 하나(items)에 여러 습득자가 각각 독립 채팅방(chat_rooms)을 생성할 수 있는 <strong>1:N 관계</strong>. 채팅방 안에 메시지들(chat_messages)이 쌓이는 구조.</p>
+  </div>
+
+  <div class="db-diagram">
+    <div class="db-table">
+      <div class="db-table-header">📦 items — 분실물 스티커 테이블</div>
+      <div class="db-table-body">
+        <span class="db-col pk">🔑 id (SR-XXXXXX)</span>
+        <span class="db-col">name (물건 이름)</span>
+        <span class="db-col">contact (암호화된 연락처)</span>
+        <span class="db-col">password (관리용)</span>
+        <span class="db-col">created_at</span>
+      </div>
+    </div>
+    <div class="db-arrow">↓ 1 : N</div>
+    <div class="db-table">
+      <div class="db-table-header">💬 chat_rooms — 익명 채팅방 테이블</div>
+      <div class="db-table-body">
+        <span class="db-col pk">🔑 id (UUID)</span>
+        <span class="db-col fk">🔗 item_id → items.id</span>
+        <span class="db-col">created_at</span>
+      </div>
+    </div>
+    <div class="db-arrow">↓ 1 : N</div>
+    <div class="db-table">
+      <div class="db-table-header">📨 chat_messages — 메시지 테이블</div>
+      <div class="db-table-body">
+        <span class="db-col pk">🔑 id</span>
+        <span class="db-col fk">🔗 room_id → chat_rooms.id</span>
+        <span class="db-col">sender (owner/finder/system)</span>
+        <span class="db-col">message</span>
+        <span class="db-col">created_at</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:16px; font-size:11px; color:#64748b; background:#f8fafc; border-radius:10px; padding:12px 16px; line-height:1.8;">
+    <strong style="color:#1e293b">🔴 Supabase Realtime 활성화</strong><br/>
+    chat_rooms / chat_messages 테이블에 INSERT 이벤트 발생 시 →
+    주인 대시보드가 WebSocket으로 즉시 수신 → 알림 표시 + 채팅 목록 자동 갱신
+  </div>
+
+  <div class="page-footer">
+    <span>SafeReturn — 안심 QR 분실물 찾기</span>
+    <span>6 / 7</span>
+  </div>
+</div>
+
+<!-- ⑦ 향후 계획 & 마무리 -->
+<div class="page">
+  <div class="slide-header">
+    <div class="slide-num">06</div>
+    <h2>향후 계획 및 마무리</h2>
+  </div>
+
+  <div class="card-grid" style="margin-bottom:24px">
+    <div class="card">
+      <h3>🔜 단기 계획</h3>
+      <ul>
+        <li>Supabase 실제 연동<br/>(현재는 React State 시뮬레이션)</li>
+        <li>연락처 서버측 단방향 암호화</li>
+        <li>안심번호 050 가상번호 실제 연동</li>
+      </ul>
+    </div>
+    <div class="card green">
+      <h3>🚀 중장기 계획</h3>
+      <ul>
+        <li>PWA 적용 (앱처럼 설치 가능)</li>
+        <li>NFC 태그 지원 추가</li>
+        <li>카카오 알림톡 연동</li>
+        <li>분실물 보관함 업체 제휴</li>
+      </ul>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>구분</th>
+        <th>현재 (데모)</th>
+        <th>프로덕션 목표</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>데이터 저장</td>
+        <td>React State (새로고침 시 초기화)</td>
+        <td>Supabase PostgreSQL (영구 저장)</td>
+      </tr>
+      <tr>
+        <td>실시간 통신</td>
+        <td>React 상태 동기화 (시뮬레이션)</td>
+        <td>Supabase Realtime WebSocket</td>
+      </tr>
+      <tr>
+        <td>연락처 보호</td>
+        <td>평문 저장 (데모용)</td>
+        <td>bcrypt 단방향 암호화</td>
+      </tr>
+      <tr>
+        <td>QR 코드</td>
+        <td>외부 API (qrserver.com)</td>
+        <td>서버 내부 생성 (qrcode 라이브러리)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="highlight-box" style="text-align:center; margin-top:10px">
+    <h3 style="font-size:18px">🙏 감사합니다</h3>
+    <p style="margin-top:8px; font-size:13px">
+      SafeReturn은 잃어버린 물건과 주인을 <strong>빠르고 안전하게</strong> 연결합니다.<br/>
+      QR 코드 하나로 누군가의 소중한 하루를 되돌려주세요.
+    </p>
+  </div>
+
+  <div class="page-footer">
+    <span>SafeReturn — 안심 QR 분실물 찾기</span>
+    <span>7 / 7</span>
+  </div>
+</div>
+
+</body>
+</html>
