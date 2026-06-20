@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"cd \\\"/Users/guhakim/Desktop/safereturn---안심-qr-분실물-찾기\\\" && vercel --yes 2>&1\",\"timeout\":120000,\"description\":\"Vercel 배포\"}",
+  "error": "Exit code 1\n<claude-code-hint v=\"1\" type=\"plugin\" value=\"vercel@claude-plugins-official\" />\nVercel CLI 54.14.2 (Node.js 24.15.0)\n\n  Directory       ~/Desktop/safereturn---안심-qr-분실물-찾기\n\nLoading teams…\nSearching for existing projects…\n\n  Detected Vite (Build Command: vite build, Output Directory: dist)\nError: Project names can be up to 100 characters long and must be lowercase. They can include letters, digits, and the following characters: '.', '_', '-'. However, they cannot contain ...",
+  "timestamp": "2026-06-20T08:30:45.966Z",
+  "retry_count": 1
+}

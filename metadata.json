@@ -1,0 +1,6 @@
+{
+  "name": "SafeReturn - 안심 QR 분실물 찾기",
+  "description": "가입 없이 비밀번호만으로 안전하게 소지품을 지켜주는 안심 QR 분실물 찾기 서비스",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
